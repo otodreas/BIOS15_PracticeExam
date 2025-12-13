@@ -54,20 +54,18 @@ predict_custom <- function() {
   cf_tall <- summary(m_tall)$coefficients$cond[, 1]
   cf_short <- summary(m_short)$coefficients$cond[, 1]
   
-  # Generate predictions for one variable while holding the other constant at its mean, mean + sd, mean - sd
-  euc_tall_pred <- exp(cf_tall[1] + x * cf_tall[2] + mean(d$ExoticPerennialGrass_cover) * cf_tall[3])
-  euc_tall_plus_sd <- exp(cf_tall[1] + x * cf_tall[2] + (mean(d$ExoticPerennialGrass_cover) + sd(d$ExoticPerennialGrass_cover)) * cf_tall[3])
-  euc_tall_minus_sd <- exp(cf_tall[1] + x * cf_tall[2] + (mean(d$ExoticPerennialGrass_cover) - sd(d$ExoticPerennialGrass_cover)) * cf_tall[3])
+  # Generate predictions for one variable while holding the other constant at its mean
+  euc_tall_annual_pred <- exp(cf_tall[1] + x * cf_tall[2] + mean(d$ExoticPerennialGrass_cover) * cf_tall[3])
+  euc_tall_perennial_pred <- exp(cf_tall[1] + mean(d$ExoticAnnualGrass_cover) * cf_tall[2] + x * cf_tall[3])
   
-  euc_short_pred <- exp(cf_short[1] + x * cf_short[2] + mean(d$ExoticPerennialGrass_cover) * cf_short[3])
-  euc_short_plus_sd <- exp(cf_short[1] + x * cf_short[2] + (mean(d$ExoticPerennialGrass_cover) + sd(d$ExoticPerennialGrass_cover)) * cf_short[3])
-  euc_short_minus_sd <- exp(cf_short[1] + x * cf_short[2] + (mean(d$ExoticPerennialGrass_cover) - sd(d$ExoticPerennialGrass_cover)) * cf_short[3])
+  euc_short_annual_pred <- exp(cf_short[1] + x * cf_short[2] + mean(d$ExoticPerennialGrass_cover) * cf_short[3])
+  euc_short_perennial_pred <- exp(cf_short[1] + mean(d$ExoticAnnualGrass_cover) * cf_short[2] + x * cf_short[3])
 
   # Return dataframe with predictions
   lines = data.frame(
     x,
-    euc_tall_pred, euc_tall_plus_sd, euc_tall_minus_sd,
-    euc_short_pred, euc_short_plus_sd, euc_short_minus_sd
+    euc_tall_annual_pred, euc_tall_perennial_pred,
+    euc_short_annual_pred, euc_short_perennial_pred
   )
 }
 
@@ -75,11 +73,9 @@ predict_custom <- function() {
 preds <- predict_custom()
 
 # Plot tall plant frequency over exotic annual grass cover with best fit lines
-p_tall <- ggplot(d) +
+p_annual_tall <- ggplot(d) +
   geom_point(aes(ExoticAnnualGrass_cover, tall), alpha = 0.25) +
-  geom_line(data = preds, aes(x, euc_tall_pred)) +  # Perennial cover = mean
-  geom_line(data = preds, aes(x, euc_tall_plus_sd)) +  # Perennial cover = mean + sd
-  geom_line(data = preds, aes(x, euc_tall_minus_sd)) +  # Perennial cover = mean - sd
+  geom_line(data = preds, aes(x, euc_tall_annual_pred)) +  # Perennial cover = mean
   ggtitle("A") +
   labs(x = "Exotic annual grass cover (%)", y = "Eucalypt seedlings\n> 50 cm tall/quadrat") +
   xlim(0, 100) +
@@ -87,16 +83,35 @@ p_tall <- ggplot(d) +
   theme_minimal()
   
 # Plot short plant frequency over exotic annual grass cover with best fit lines
-p_short <- ggplot(d) +
+p_annual_short <- ggplot(d) +
   geom_point(aes(ExoticAnnualGrass_cover, short), alpha = 0.25) +
-  geom_line(data = preds, aes(x, euc_short_pred)) +  # Perennial cover = mean
-  geom_line(data = preds, aes(x, euc_short_plus_sd)) +  # Perennial cover = mean + sd
-  geom_line(data = preds, aes(x, euc_short_minus_sd)) +  # Perennial cover = mean - sd  # geom_line(data = linedf, aes(linex, liney)) +
+  geom_line(data = preds, aes(x, euc_short_annual_pred)) +  # Perennial cover = mean
   ggtitle("B") +
   labs(x = "Exotic annual grass cover (%)", y = "Eucalypt seedlings\n< 50 cm tall/quadrat") +
   xlim(0, 100) +
   ylim(0, 22) +
   theme_minimal()
 
+# Plot tall plant frequency over exotic annual grass cover with best fit lines
+p_perennial_tall <- ggplot(d) +
+  geom_point(aes(ExoticPerennialGrass_cover, tall), alpha = 0.25) +
+  geom_line(data = preds, aes(x, euc_tall_perennial_pred)) +  # Annual cover = mean
+  ggtitle("C") +
+  labs(x = "Exotic perennial grass cover (%)", y = "Eucalypt seedlings\n> 50 cm tall/quadrat") +
+  xlim(0, 100) +
+  ylim(0, 22) +
+  theme_minimal()
+  
+# Plot short plant frequency over exotic annual grass cover with best fit lines
+p_perennial_short <- ggplot(d) +
+  geom_point(aes(ExoticPerennialGrass_cover, short), alpha = 0.25) +
+  geom_line(data = preds, aes(x, euc_short_perennial_pred)) +  # Annual cover = mean
+  ggtitle("D") +
+  labs(x = "Exotic perennial grass cover (%)", y = "Eucalypt seedlings\n< 50 cm tall/quadrat") +
+  xlim(0, 100) +
+  ylim(0, 22) +
+  theme_minimal()
+
 # Create plot layout
-p_tall / p_short
+(p_annual_tall | p_perennial_tall) /
+(p_annual_short | p_perennial_short)
