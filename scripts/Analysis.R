@@ -1,13 +1,10 @@
 # Clear variables
 rm(list = ls())
 
-# Reset plotting device
-# dev.off()
-
 # Attach packages
 library(tidyverse)
 library(here)
-library(MASS)
+library(glmmTMB)
 
 # Define function to read and process metadata
 read_metadata <- function(rawdata_df, mdata_path) {
@@ -26,6 +23,23 @@ d <- as_tibble(read.csv(here("data", "exam2023_data-2.csv"))) %>%
   drop_na()
 mdata <- read_metadata(d, here("data", "exam2023_metadata-2.csv"))
 
-# Create mixed linear model
-var <- d$ExoticAnnualHerb_cover
-plot(var, d$Euc_canopy_cover, col = as.factor(d$Season))
+# Negative binomial mixed-effect models
+m50 <- glmmTMB(
+  euc_sdlgs0_50cm ~
+    ExoticAnnualGrass_cover +
+    ExoticPerennialGrass_cover +
+    NativePerennialGrass_cover +
+    (1 | Property),
+  family = nbinom2, data = d
+)
+
+m2 <- glmmTMB(
+  (euc_sdlgs50cm.2m + euc_sdlgs.2m) ~
+    ExoticAnnualGrass_cover +
+    ExoticPerennialGrass_cover +
+    NativePerennialGrass_cover +
+    (1 | Property),
+  family = nbinom2, data = d
+)
+
+
