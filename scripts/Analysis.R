@@ -62,43 +62,55 @@ predict_custom <- function(m1, m2, col_a, col_b, data) {
   )
 }
 
-group_model_table1 <- function(m1, m2, mname1, mname2) {
-  prop_var <- c(icc(m1)[2], icc(m2)[2])
-  response <- c(mname1, mname2)
-  table <- data.frame(c(response, prop_var))
-  print(table)
-  write.csv(table, here("outputs", "group_model_table.csv"))
+# Get general summary statistics
+general_table <- function() {
+  table <- data.frame(stats = c("mean", "sd"))
+  table$annual <- c(mean(d$ExoticAnnualGrass_cover), sd(d$ExoticAnnualGrass_cover))
+  table$perennial <- c(mean(d$ExoticPerennialGrass_cover), sd(d$ExoticPerennialGrass_cover))
+  table$tall <- c(mean(d$tall), sd(d$tall))
+  table$short <- c(mean(d$short), sd(d$short))
+  table <- table |>
+    mutate(across(where(is.numeric), ~ signif(.x, digits = 3)))
+  write.csv(table, here("outputs", "general_table.csv"))
 }
 
-group_model_table2 <- function(mname1, mname2) {
-  intercepts1 <- summary(exp(coef(m_tall)$cond$Property[,1]))[-4]
-  intercepts2 <- summary(exp(coef(m_short)$cond$Property[,1]))[-4]
-  
-  table <- data.frame(rbind(intercepts1, intercepts2))
+icc_table <- function(m1, m2, mname1, mname2) {
+  table <- data.frame(unadj_icc = c(icc(m1)[, 2], icc(m2)[, 2]))
   table$model <- c(mname1, mname2)
-  write.csv(table, here("outputs", "group_model_table2.csv"))
+  write.csv(table, here("outputs", "icc.csv"))
 }
 
-# Define funciton to create table
-tables_custom <- function(predictor1, predictor2, response1, response2, data) {
-  
-  # "Freeze" column names
-  predictor1 <- enquo(predictor1)
-  predictor2 <- enquo(predictor2)
-  response1 <- enquo(response1)
-  response2 <- enquo(response2)
-  
-  # Get columns as vectors
-  p1 <- eval_tidy(predictor1, data)
-  p2 <- eval_tidy(predictor2, data)
-  r1 <- eval_tidy(response1, data)
-  r2 <- eval_tidy(response2, data)
-  
-  table1 <- data.frame()
-  table2 <- data.frame()
+group_dist <- function() {
+  short <- summary(exp(coef(m_short)$cond$Property[,1]))[-4]
+  tall <- summary(exp(coef(m_tall)$cond$Property[,1]))[-4]
+  table <- data.frame(rbind(short, tall))
+  table <- table |>
+    mutate(across(where(is.numeric), ~ signif(.x, digits = 3)))
+  write.csv(table, here("outputs", "group_dist.csv"))
+}
 
-  means <- c(mean())
-  write.csv(table, here("outputs", "table.csv"))
+# Get % change in euc for each model range
+get_pred_ranges <- function() {
+  tamax <- preds$euc_tall_annual_pred[101]
+  tamin <- preds$euc_tall_annual_pred[1]
+  tpmax <- preds$euc_tall_perennial_pred[101]
+  tpmin <- preds$euc_tall_perennial_pred[1]
+  samax <- preds$euc_short_annual_pred[101]
+  samin <- preds$euc_short_annual_pred[1]
+  spmax <- preds$euc_short_perennial_pred[101]
+  spmin <- preds$euc_short_perennial_pred[1]
+
+  params <- list(c(tamin, tamax), c(tpmin, tpmax), c(samin, samax), c(spmin, spmax))
+  labels <- c("tall_annual: ", "tall_peren: ", "short_annual: ", "short_peren: ")
+  txt <- "Predicted change in response by predictor going from 0-100% for both models"
+
+  for (i in seq_along(labels)) {
+    txt[i+1] <- (paste0(
+      labels[i], signif(params[[i]][1], 2), "-", signif(params[[i]][2], 2), ", ",
+      signif((params[[i]][2] - params[[i]][1]) / params[[i]][1] * 100, 2), "%"
+    ))
+  writeLines(txt, here("outputs", "model_predictions.txt"))
+  }
 }
 
 
@@ -136,8 +148,9 @@ m_short <- glmmTMB(
 preds <- predict_custom(m_tall, m_short, ExoticPerennialGrass_cover, ExoticAnnualGrass_cover, d)
         
 # Create tables
-group_model_table1(m_short, m_tall, "Number of eucalypt seedlings <50 cm/quadrat", "Number of eucalypt seedlings >50 cm/quadrat")
-group_model_table2("Tall", "Short")
+general_table()
+icc_table(m_short, m_tall, "Number of eucalypt seedlings <50 cm/quadrat", "Number of eucalypt seedlings >50 cm/quadrat")
+group_dist()
 
 # Plot tall plant frequency over exotic annual grass cover with best fit lines
 p_annual_tall <- ggplot(d) +
@@ -149,22 +162,22 @@ p_annual_tall <- ggplot(d) +
   ylim(0, 22) +
   theme_minimal()
   
-# Plot short plant frequency over exotic annual grass cover with best fit lines
-p_annual_short <- ggplot(d) +
-  geom_point(aes(ExoticAnnualGrass_cover, short), alpha = 0.25) +
-  geom_line(data = preds, aes(x, euc_short_annual_pred)) +  # Perennial cover = mean
-  ggtitle("B") +
-  labs(x = "Exotic annual grass cover (%)", y = "Eucalypt seedlings\n< 50 cm tall/quadrat") +
-  xlim(0, 100) +
-  ylim(0, 22) +
-  theme_minimal()
-
 # Plot tall plant frequency over exotic annual grass cover with best fit lines
 p_perennial_tall <- ggplot(d) +
   geom_point(aes(ExoticPerennialGrass_cover, tall), alpha = 0.25) +
   geom_line(data = preds, aes(x, euc_tall_perennial_pred)) +  # Annual cover = mean
-  ggtitle("C") +
+  ggtitle("B") +
   labs(x = "Exotic perennial grass cover (%)", y = "Eucalypt seedlings\n> 50 cm tall/quadrat") +
+  xlim(0, 100) +
+  ylim(0, 22) +
+  theme_minimal()
+
+# Plot short plant frequency over exotic annual grass cover with best fit lines
+p_annual_short <- ggplot(d) +
+  geom_point(aes(ExoticAnnualGrass_cover, short), alpha = 0.25) +
+  geom_line(data = preds, aes(x, euc_short_annual_pred)) +  # Perennial cover = mean
+  ggtitle("C") +
+  labs(x = "Exotic annual grass cover (%)", y = "Eucalypt seedlings\n< 50 cm tall/quadrat") +
   xlim(0, 100) +
   ylim(0, 22) +
   theme_minimal()
@@ -182,3 +195,7 @@ p_perennial_short <- ggplot(d) +
 # Create plot layout
 (p_annual_tall | p_perennial_tall) /
 (p_annual_short | p_perennial_short)
+
+# Write model prediction summary to txt
+# Get % change in euc for each model range
+get_pred_ranges()

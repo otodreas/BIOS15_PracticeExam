@@ -1,0 +1,5 @@
+Predicted change in response by predictor going from 0-100% for both models
+tall_annual: 0.45-0.77, 71%
+tall_peren: 0.54-0.025, -95%
+short_annual: 0.24-0.17, -28%
+short_peren: 0.26-0.0041, -98%
