@@ -45,7 +45,7 @@ short \; model &= glmmTMB(seedl.<50cm \sim ann. \; cover + peren. \; cover + (1 
 
 Negative binomial errors were used when constructing the models. All analyses were conducted in R. Since the data for seedling abundance by size was originally partitioned into three groups (0-50 cm, 50-200 cm, 200+ cm), values for the latter two columns were summed to generate the "tall" seedlings data. In other words, in this paper, "short" seedlings refers to seedlings 0-50 cm tall while "tall" seedlings refers to seedlings 50+ cm tall.
 
-\section{Results & Discussion}
+\section{Results \& Discussion}
 
 Generally, exotic annual grass cover was higher than exotic perennial grass cover across quadrats, at 12.4\% and 3.71\% respectively. There were on average 1.21 tall eucalypt seedlings recorded per quadrat and 0.662 short eucalypt seedlings recorded per quadrat. Variation in grass cover scaled with grass cover. The variation in abundance was lower for tall eucalypt seedlings than it was for short eucalypt seedlings, for which standard deviations were 3.17 and 4.59 respectively (Table 1).
 
@@ -87,6 +87,14 @@ Given that a large share of the variance in response was attributed to the rando
 
 This leaves only about half of the variation in seedling abundances for both height classes available to be attributed to the exotic grass cover. Low model slopes were observed across both models and for both predictors. In practice, this means that the neither exotic annual grass cover nor exotic perennial grass cover seemed to affect the abundance of short and tall eucalypt seedlings. According to the model for tall eucalypt seedlings, going from 0-100\% exotic annual grass cover results in an increase from 0.45 to 0.77 seedlings per quadrat, a 71\% increase (Figure 1A). For the perennial grass, going from 0-100\% cover represents a decrease of 95\%, from 0.54 to 0.025 seedlings (Figure 1B). For the model for short eucalypt seedlings, going from 0-100\% annual cover results in a decrease of 28\% in seedling abundance, going from 0.24 to 0.17 seedlings per quadrat (Figure 1C). Lastly, for perennial cover, there was an expected decrease of 98\% seedling abundance, from 0.26 to 0.0041 seedlings per quadrat (Figure 1D).
 
+\begin{figure}[htp]
+    \centering
+    \includegraphics[width=10cm]{outputs/fig1.pdf}
+    \caption{Eucalypt seedling abundance by height and exotic grass cover. While hard to visually identify, there was a positive relationship between exotic grass cover and eucalypt seedling abundance for exotic annual grass and tall seedlings (A), and a negative relationship in the rest (B-D). Exotic perennial grass had a larger effect on percent change in eucalypt seedling abundance for both tall and short seedlings compared to exotic annual grass. in  Note that one data point representing a quadrat with 78 seedlings was not plotted to increase clarity but was included in the model.}
+    \label{fig:plts}
+\end{figure}
+
+Overall, the models suggest that exotic perennial grass cover has a larger negative effect on eucalypt seedling abundance than exotic annual grass for both short and tall seedlings. The only positive relationship between exotic grass cover and eucalypt seedling abundance was observed for exotic annual grass cover's effect on tall seedling abundance. 
 
 
 \begin{table}[ht]
@@ -109,6 +117,6 @@ Tall ($>50$ cm) & 0.051 & 0.137 & 0.654 & 1.890 & 3.100 \\
 \section{Appendix}
 
 The data, code, and figures used to produce this report can be downloaded at the link below:
-\url{}.
+\url{https://github.com/otodreas/BIOS15_PracticeExam}.
 
 \end{document}
